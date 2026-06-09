@@ -22,6 +22,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/my-courses', MyCourses::class)->name('my-courses');
     Route::get('/courses/{course:slug}/learn/{lesson?}', Watch::class)->name('courses.watch');
 
+    // Post-login landing — students go straight to their courses.
+    Route::get('dashboard', fn () => redirect()->route('my-courses'))->name('dashboard');
+
     Route::view('profile', 'profile')->name('profile');
 
     Route::post('/logout', function (Logout $logout) {

@@ -60,11 +60,12 @@ class AuthenticationTest extends TestCase
 
         $this->actingAs($user);
 
-        $response = $this->get('/dashboard');
+        // The storefront navbar renders on authenticated pages.
+        $response = $this->get('/my-courses');
 
         $response
             ->assertOk()
-            ->assertSeeVolt('layout.navigation');
+            ->assertSee(__('messages.nav.my_courses'));
     }
 
     public function test_users_can_logout(): void
