@@ -112,13 +112,14 @@ class AccessCodeResource extends Resource
                             ->helperText(__('admin.expires_hint'))
                             ->minDate(now()),
                     ])
-                    ->action(function (array $data, GenerateCodeBatchAction $action) {
+                    ->action(function (array $data) {
                         $course = Course::findOrFail($data['course_id']);
                         $expires = filled($data['expires_at'] ?? null)
                             ? Carbon::parse($data['expires_at'])->endOfDay()
                             : null;
 
-                        $result = $action->execute($course, (int) $data['quantity'], $expires);
+                        $result = app(GenerateCodeBatchAction::class)
+                            ->execute($course, (int) $data['quantity'], $expires);
 
                         // Stream the plaintext codes as CSV — they are shown only once.
                         $filename = 'codes-'.substr($result['batch_id'], 0, 8).'.csv';

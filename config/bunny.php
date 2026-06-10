@@ -31,4 +31,10 @@ return [
     | How long (seconds) a signed playback URL stays valid.
     */
     'url_ttl' => (int) env('BUNNY_URL_TTL', 3600),
+
+    /*
+    | Max seconds to wait while streaming a video file up to Bunny Stream from
+    | the admin panel. Large recordings need a generous window.
+    */
+    'upload_timeout' => (int) env('BUNNY_UPLOAD_TIMEOUT', 1800),
 ];

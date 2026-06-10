@@ -10,7 +10,9 @@ use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Filament\Widgets;
+use Illuminate\Contracts\View\View;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -31,6 +33,13 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Indigo,
             ])
+            ->font('Tajawal')
+            ->sidebarCollapsibleOnDesktop()
+            ->maxContentWidth('screen-2xl')
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): View => view('filament.admin.theme'),
+            )
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
