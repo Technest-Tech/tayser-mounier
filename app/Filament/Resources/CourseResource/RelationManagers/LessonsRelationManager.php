@@ -3,14 +3,13 @@
 namespace App\Filament\Resources\CourseResource\RelationManagers;
 
 use App\Enums\LessonSource;
-use App\Services\Bunny\BunnyStreamService;
+use App\Models\Lesson;
+use App\Services\Bunny\BunnySignedUrlService;
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Support\Facades\Storage;
 
 class LessonsRelationManager extends RelationManager
 {
@@ -49,28 +48,8 @@ class LessonsRelationManager extends RelationManager
                 ->live()
                 ->required(),
 
-            // Upload a file straight to Bunny Stream (bunny source only). Tucked
-            // into a collapsed section so it doesn't dominate the modal — expand
-            // it only when uploading. On save the file is streamed to Bunny and
-            // the returned guid fills `video_id`.
-            Forms\Components\Section::make(__('admin.bunny_upload'))
-                ->description(__('admin.bunny_upload_hint'))
-                ->icon('heroicon-o-cloud-arrow-up')
-                ->collapsible()
-                ->collapsed()
-                ->visible(fn (Forms\Get $get) => $get('source') === LessonSource::Bunny->value)
-                ->columnSpanFull()
-                ->schema([
-                    Forms\Components\FileUpload::make('video_file')
-                        ->hiddenLabel()
-                        ->disk('local')
-                        ->directory('bunny-uploads')
-                        ->acceptedFileTypes(['video/mp4', 'video/quicktime', 'video/x-matroska', 'video/webm'])
-                        ->maxSize(2 * 1024 * 1024) // 2 GB (kB)
-                        ->previewable(false)
-                        ->columnSpanFull(),
-                ]),
-
+            // The admin uploads the video in the Bunny dashboard, then pastes the
+            // video's URL (or raw GUID) here. We extract the id on save.
             Forms\Components\TextInput::make('video_id')
                 ->label(fn (Forms\Get $get) => $get('source') === LessonSource::Youtube->value
                     ? __('admin.youtube_id')
@@ -78,9 +57,12 @@ class LessonsRelationManager extends RelationManager
                 ->helperText(fn (Forms\Get $get) => $get('source') === LessonSource::Youtube->value
                     ? __('admin.youtube_id_hint')
                     : __('admin.bunny_id_hint'))
-                // Optional when a file is being uploaded — the upload fills it in.
-                ->required(fn (Forms\Get $get) => blank($get('video_file')))
-                ->maxLength(255),
+                ->placeholder(fn (Forms\Get $get) => $get('source') === LessonSource::Youtube->value
+                    ? 'https://youtu.be/…'
+                    : 'https://iframe.mediadelivery.net/embed/…')
+                ->required()
+                ->maxLength(255)
+                ->columnSpanFull(),
 
             Forms\Components\TextInput::make('duration')
                 ->label(__('admin.duration_seconds'))
@@ -103,6 +85,13 @@ class LessonsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('order')
                     ->label('#')
                     ->sortable(),
+                Tables\Columns\ImageColumn::make('thumbnail')
+                    ->label(__('admin.video'))
+                    ->state(fn (Lesson $record): ?string => $this->lessonThumbnail($record))
+                    ->height(40)
+                    ->width(71)
+                    ->extraImgAttributes(['class' => 'rounded-md object-cover', 'loading' => 'lazy'])
+                    ->defaultImageUrl($this->thumbnailPlaceholder()),
                 Tables\Columns\TextColumn::make('title')
                     ->label(__('admin.title'))
                     ->searchable()
@@ -123,57 +112,93 @@ class LessonsRelationManager extends RelationManager
             ->headerActions([
                 Tables\Actions\CreateAction::make()
                     ->label(__('admin.add_lesson'))
-                    ->mutateFormDataUsing(fn (array $data): array => $this->handleBunnyUpload($data)),
+                    ->mutateFormDataUsing(fn (array $data): array => $this->normalizeVideoId($data)),
             ])
             ->actions([
+                Tables\Actions\Action::make('preview')
+                    ->label(__('admin.preview_video'))
+                    ->icon('heroicon-o-play-circle')
+                    ->color('gray')
+                    ->modalHeading(fn (Lesson $record): string => $record->title)
+                    ->modalContent(fn (Lesson $record) => view(
+                        'filament.admin.lesson-preview',
+                        ['url' => $this->lessonPlayerUrl($record)],
+                    ))
+                    ->modalWidth('3xl')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel(__('admin.close'))
+                    ->visible(fn (Lesson $record): bool => filled($record->video_id)),
                 Tables\Actions\EditAction::make()
-                    ->mutateFormDataUsing(fn (array $data): array => $this->handleBunnyUpload($data)),
+                    ->mutateFormDataUsing(fn (array $data): array => $this->normalizeVideoId($data)),
                 Tables\Actions\DeleteAction::make(),
             ]);
     }
 
     /**
-     * If the admin attached a video file for a Bunny lesson, stream it up to
-     * Bunny Stream and replace the form data's `video_id` with the new guid.
-     * The temp upload is removed afterwards and the non-column `video_file`
-     * key is stripped so it never reaches the model.
+     * Poster image URL for the lesson's video (Bunny thumbnail or YouTube still),
+     * or null when there's no usable video id yet.
      */
-    protected function handleBunnyUpload(array $data): array
+    protected function lessonThumbnail(Lesson $record): ?string
     {
-        $path = $data['video_file'] ?? null;
-        unset($data['video_file']);
+        if (blank($record->video_id)) {
+            return null;
+        }
 
-        if (blank($path) || ($data['source'] ?? null) !== LessonSource::Bunny->value) {
+        return match ($record->source) {
+            LessonSource::Bunny => app(BunnySignedUrlService::class)->thumbnailUrl($record),
+            LessonSource::Youtube => "https://img.youtube.com/vi/{$record->video_id}/mqdefault.jpg",
+        };
+    }
+
+    /**
+     * Embeddable player URL for the in-modal preview.
+     */
+    protected function lessonPlayerUrl(Lesson $record): string
+    {
+        return match ($record->source) {
+            LessonSource::Bunny => app(BunnySignedUrlService::class)->embedUrl($record),
+            LessonSource::Youtube => "https://www.youtube-nocookie.com/embed/{$record->video_id}?rel=0&modestbranding=1",
+        };
+    }
+
+    /**
+     * Accept either a full Bunny/YouTube URL or a raw id in the video_id field
+     * and store just the id, so admins can paste straight from the dashboard.
+     */
+    protected function normalizeVideoId(array $data): array
+    {
+        $value = trim((string) ($data['video_id'] ?? ''));
+
+        if ($value === '') {
             return $data;
         }
 
-        try {
-            $guid = app(BunnyStreamService::class)->upload(
-                $data['title'] ?? 'Lesson video',
-                Storage::disk('local')->path($path),
-            );
-
-            $data['video_id'] = $guid;
-
-            Notification::make()
-                ->title(__('admin.bunny_upload_done'))
-                ->success()
-                ->send();
-        } catch (\Throwable $e) {
-            Notification::make()
-                ->title(__('admin.bunny_upload_failed'))
-                ->body($e->getMessage())
-                ->danger()
-                ->persistent()
-                ->send();
-
-            // Stop the save so the admin can retry rather than persisting a
-            // lesson that points at no video.
-            throw new \Filament\Support\Exceptions\Halt;
-        } finally {
-            Storage::disk('local')->delete($path);
+        if (($data['source'] ?? null) === LessonSource::Youtube->value) {
+            // youtu.be/ID, watch?v=ID, /embed/ID, /shorts/ID
+            if (preg_match('~(?:youtu\.be/|v=|/embed/|/shorts/)([A-Za-z0-9_-]{11})~', $value, $m)) {
+                $value = $m[1];
+            }
+        } else {
+            // Pull the GUID out of any Bunny URL; otherwise keep what was pasted.
+            if (preg_match('/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i', $value, $m)) {
+                $value = $m[0];
+            }
         }
 
+        $data['video_id'] = $value;
+
         return $data;
+    }
+
+    /**
+     * Inline SVG placeholder shown until a video/thumbnail exists.
+     */
+    protected function thumbnailPlaceholder(): string
+    {
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="71" height="40" viewBox="0 0 71 40">'
+            .'<rect width="71" height="40" rx="6" fill="#e0e7ff"/>'
+            .'<path d="M30 14l12 6-12 6z" fill="#6366f1"/></svg>';
+
+        return 'data:image/svg+xml;base64,'.base64_encode($svg);
     }
 }

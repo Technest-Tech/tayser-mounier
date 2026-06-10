@@ -45,6 +45,25 @@ class BunnySignedUrlService
         return "https://{$cdn}{$path}?token={$token}&expires={$expires}";
     }
 
+    /**
+     * Poster/thumbnail image for a Bunny video. Bunny auto-generates
+     * `thumbnail.jpg` once processing finishes. Signed only when token auth is
+     * enabled (an unsigned token would otherwise be rejected by the pull zone).
+     */
+    public function thumbnailUrl(Lesson $lesson): string
+    {
+        $cdn = config('bunny.cdn_hostname');
+        $path = "/{$lesson->video_id}/thumbnail.jpg";
+
+        if (blank(config('bunny.token_auth_key'))) {
+            return "https://{$cdn}{$path}";
+        }
+
+        [$token, $expires] = $this->signPath($path);
+
+        return "https://{$cdn}{$path}?token={$token}&expires={$expires}";
+    }
+
     public function isConfigured(): bool
     {
         return filled(config('bunny.token_auth_key'))
