@@ -61,4 +61,35 @@
     .container-app {
         @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
     }
+
+    /* Brand mark ----------------------------------------------------------- */
+    .brand-mark {
+        @apply grid place-items-center rounded-2xl bg-gradient-to-br from-brand-500
+               to-brand-800 font-extrabold text-white shadow-lg shadow-brand-900/25
+               ring-1 ring-white/10;
+    }
+
+    /* Eyebrow pill --------------------------------------------------------- */
+    .eyebrow {
+        @apply inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1.5
+               text-xs font-bold text-brand-100 ring-1 ring-white/20 backdrop-blur;
+    }
+
+    /* Feature card --------------------------------------------------------- */
+    .feature-card {
+        @apply card relative flex flex-col gap-3 p-6 transition
+               hover:-translate-y-0.5 hover:shadow-card-hover;
+    }
+    .feature-icon {
+        @apply grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-brand-600
+               ring-1 ring-brand-600/10;
+    }
+}
+
+@layer utilities {
+    /* Subtle dotted backdrop for hero sections */
+    .bg-dots {
+        background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.18) 1px, transparent 0);
+        background-size: 26px 26px;
+    }
 }

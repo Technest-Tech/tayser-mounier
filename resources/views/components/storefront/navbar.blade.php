@@ -4,11 +4,9 @@
 >
     <nav class="container-app flex h-16 items-center justify-between gap-4">
         {{-- Brand --}}
-        <a href="{{ route('home') }}" class="flex items-center gap-2">
-            <span class="grid h-9 w-9 place-items-center rounded-xl bg-brand-600 text-white font-extrabold">
-                T
-            </span>
-            <span class="text-lg font-extrabold text-slate-900">{{ __('messages.app_name') }}</span>
+        <a href="{{ route('home') }}" class="flex items-center gap-2.5">
+            <span class="brand-mark h-9 w-9 text-lg">ت</span>
+            <span class="text-lg font-extrabold tracking-tight text-slate-900">{{ __('messages.app_name') }}</span>
         </a>
 
         {{-- Desktop links --}}

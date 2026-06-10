@@ -1,8 +1,8 @@
 <?php
 
 return [
-    'app_name' => 'Tayser Mounier',
-    'tagline' => 'Learn at your own pace',
+    'app_name' => 'Al-Tayseer — Ahmed Mounir',
+    'tagline' => 'Learn at your own pace — results that matter',
 
     'nav' => [
         'home' => 'Home',
@@ -17,11 +17,34 @@ return [
     ],
 
     'home' => [
-        'hero_title' => 'Master new skills with expert-led courses',
-        'hero_subtitle' => 'Browse our catalog, watch free previews, and unlock premium courses.',
+        'eyebrow' => 'Al-Tayseer Learning Platform',
+        'hero_title' => 'Study smart, and reach what you aim for',
+        'hero_subtitle' => 'Step-by-step courses with Ahmed Mounir. Watch the free previews, and unlock the course you want with an access code.',
         'browse_courses' => 'Browse courses',
-        'featured' => 'Featured courses',
+        'browse_free' => 'Start with a free course',
+        'featured' => 'Latest courses',
         'view_all' => 'View all',
+
+        'stats' => [
+            'courses' => 'Courses available',
+            'lessons' => 'Recorded lessons',
+            'students' => 'Students',
+        ],
+
+        'why_title' => 'Why Al-Tayseer?',
+        'why_subtitle' => 'Simplified learning, made your way.',
+        'features' => [
+            'simple_title' => 'Explanations that click',
+            'simple_text' => 'Every idea is simplified and builds on the last — no filler, no detours.',
+            'anytime_title' => 'Learn anytime, anywhere',
+            'anytime_text' => 'Your courses come with you on mobile and laptop, whenever it suits you.',
+            'track_title' => 'Track your progress',
+            'track_text' => 'Mark the lessons you finish and pick up right where you left off.',
+        ],
+
+        'cta_title' => 'Ready to start your journey?',
+        'cta_subtitle' => 'Pick the course that fits you and learn at your own pace from lesson one.',
+        'cta_button' => 'Get started',
     ],
 
     'common' => [

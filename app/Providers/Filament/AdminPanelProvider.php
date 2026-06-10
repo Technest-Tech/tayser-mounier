@@ -27,7 +27,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            ->brandName('Tayser Mounier')
+            ->brandName('التيسير — أحمد منير')
             ->colors([
                 'primary' => Color::Indigo,
             ])
