@@ -11,7 +11,9 @@ use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 class AccessCodeResource extends Resource
 {
@@ -34,60 +36,41 @@ class AccessCodeResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            // One row per course: aggregate its codes. MIN(id) gives each grouped
+            // row a unique key for Filament; MAX(created_at) sorts by latest batch.
+            ->modifyQueryUsing(function (Builder $query) {
+                $redeemed = AccessCodeStatus::Redeemed->value;
+
+                return $query
+                    ->select('access_codes.course_id')
+                    ->selectRaw('MIN(access_codes.id) as id')
+                    ->selectRaw('COUNT(*) as total_codes')
+                    ->selectRaw("SUM(CASE WHEN status = '{$redeemed}' THEN 1 ELSE 0 END) as used_codes")
+                    ->selectRaw('MAX(access_codes.created_at) as created_at')
+                    ->groupBy('access_codes.course_id');
+            })
             ->defaultSort('created_at', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('course.title')
                     ->label(__('admin.course'))
-                    ->searchable()
-                    ->sortable()
-                    ->weight('bold'),
+                    ->weight('bold')
+                    ->description(fn ($record) => __('admin.latest_batch').': '.optional($record->created_at)->translatedFormat('d M Y')),
 
-                Tables\Columns\TextColumn::make('batch_id')
-                    ->label(__('admin.batch'))
-                    ->formatStateUsing(fn (string $state) => substr($state, 0, 8))
+                Tables\Columns\TextColumn::make('total_codes')
+                    ->label(__('admin.total_codes'))
                     ->badge()
-                    ->copyable()
-                    ->toggleable(),
+                    ->color('gray'),
 
-                Tables\Columns\TextColumn::make('status')
-                    ->label(__('admin.status'))
+                Tables\Columns\TextColumn::make('used_codes')
+                    ->label(__('admin.used_codes'))
                     ->badge()
-                    ->formatStateUsing(fn (AccessCodeStatus $state) => $state->label())
-                    ->color(fn (AccessCodeStatus $state) => $state === AccessCodeStatus::Unused ? 'success' : 'gray'),
+                    ->color('warning'),
 
-                Tables\Columns\TextColumn::make('redeemer.name')
-                    ->label(__('admin.redeemed_by'))
-                    ->placeholder('—'),
-
-                Tables\Columns\TextColumn::make('redeemed_at')
-                    ->label(__('admin.redeemed_at'))
-                    ->dateTime()
-                    ->placeholder('—')
-                    ->toggleable(),
-
-                Tables\Columns\TextColumn::make('expires_at')
-                    ->label(__('admin.expires_at'))
-                    ->dateTime()
-                    ->placeholder(__('admin.never'))
-                    ->toggleable(),
-
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label(__('admin.created_at'))
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-            ])
-            ->filters([
-                Tables\Filters\SelectFilter::make('course_id')
-                    ->label(__('admin.course'))
-                    ->relationship('course', 'title')
-                    ->searchable()
-                    ->preload(),
-                Tables\Filters\SelectFilter::make('status')
-                    ->label(__('admin.status'))
-                    ->options(collect(AccessCodeStatus::cases())->mapWithKeys(
-                        fn ($s) => [$s->value => $s->label()]
-                    )),
+                Tables\Columns\TextColumn::make('unused_codes')
+                    ->label(__('admin.unused_codes'))
+                    ->badge()
+                    ->color('success')
+                    ->state(fn ($record) => (int) $record->total_codes - (int) $record->used_codes),
             ])
             ->headerActions([
                 Tables\Actions\Action::make('generate')
@@ -121,7 +104,6 @@ class AccessCodeResource extends Resource
                         $result = app(GenerateCodeBatchAction::class)
                             ->execute($course, (int) $data['quantity'], $expires);
 
-                        // Stream the plaintext codes as CSV — they are shown only once.
                         $filename = 'codes-'.substr($result['batch_id'], 0, 8).'.csv';
 
                         return response()->streamDownload(function () use ($result, $course) {
@@ -135,16 +117,68 @@ class AccessCodeResource extends Resource
                     }),
             ])
             ->actions([
-                // Allow revoking an unused code.
-                Tables\Actions\DeleteAction::make()
-                    ->label(__('admin.revoke'))
-                    ->visible(fn (AccessCode $record) => $record->status === AccessCodeStatus::Unused),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()->label(__('admin.revoke')),
-                ]),
+                // Popup: all codes for this course + usage history.
+                Tables\Actions\Action::make('viewCodes')
+                    ->label(__('admin.view_codes'))
+                    ->icon('heroicon-o-eye')
+                    ->color('primary')
+                    ->modalHeading(fn ($record) => $record->course?->title)
+                    ->modalWidth('5xl')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel(__('admin.close'))
+                    ->modalContent(fn ($record) => view('filament.access-codes-modal', [
+                        'codes' => static::codesForCourse($record->course_id),
+                    ])),
+
+                // Download all codes for this course as CSV.
+                Tables\Actions\Action::make('exportCodes')
+                    ->label(__('admin.export_csv'))
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('gray')
+                    ->action(function ($record) {
+                        $codes = static::codesForCourse($record->course_id);
+                        $title = $record->course?->title ?? 'course';
+
+                        return response()->streamDownload(function () use ($codes) {
+                            $out = fopen('php://output', 'w');
+                            fputcsv($out, ['code', 'status', 'redeemed_by', 'redeemed_at', 'expires_at']);
+                            foreach ($codes as $c) {
+                                fputcsv($out, [
+                                    $c->plainCode() ?? '—',
+                                    $c->status->value,
+                                    optional($c->redeemer)->name ?? '',
+                                    optional($c->redeemed_at)?->toDateTimeString() ?? '',
+                                    optional($c->expires_at)?->toDateTimeString() ?? '',
+                                ]);
+                            }
+                            fclose($out);
+                        }, 'codes-'.Str::slug($title).'.csv', ['Content-Type' => 'text/csv']);
+                    }),
+
+                // Revoke all still-unused codes for this course.
+                Tables\Actions\Action::make('revokeUnused')
+                    ->label(__('admin.revoke_unused'))
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->action(function ($record) {
+                        AccessCode::where('course_id', $record->course_id)
+                            ->where('status', AccessCodeStatus::Unused)
+                            ->delete();
+                    }),
             ]);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Collection<int, AccessCode>
+     */
+    protected static function codesForCourse(int $courseId)
+    {
+        return AccessCode::where('course_id', $courseId)
+            ->with('redeemer')
+            ->orderByRaw("status = '".AccessCodeStatus::Unused->value."' desc")
+            ->orderByDesc('created_at')
+            ->get();
     }
 
     public static function getPages(): array
@@ -156,7 +190,6 @@ class AccessCodeResource extends Resource
 
     public static function canCreate(): bool
     {
-        // Codes are only created via the "Generate codes" action.
         return false;
     }
 }

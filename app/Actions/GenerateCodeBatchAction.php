@@ -5,14 +5,16 @@ namespace App\Actions;
 use App\Models\AccessCode;
 use App\Models\Course;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
  * Generates a batch of single-use access codes for a course.
  *
- * Returns the PLAINTEXT codes (shown to the admin once / exported to CSV).
- * Only the HMAC hash is persisted — plaintext is never stored.
+ * Returns the PLAINTEXT codes (shown to the admin / exported to CSV). Each row
+ * stores a one-way HMAC `code_hash` (for redemption lookup) plus an encrypted,
+ * reversible `code_encrypted` copy so the admin can view codes later.
  */
 class GenerateCodeBatchAction
 {
@@ -49,6 +51,7 @@ class GenerateCodeBatchAction
                 'course_id' => $course->id,
                 'batch_id' => $batchId,
                 'code_hash' => $hash,
+                'code_encrypted' => Crypt::encryptString($code),
                 'status' => \App\Enums\AccessCodeStatus::Unused->value,
                 'expires_at' => $expiresAt,
                 'created_at' => $now,

@@ -52,5 +52,24 @@ class AdminAccessTest extends TestCase
             ->assertHasNoTableActionErrors();
 
         $this->assertSame(7, AccessCode::where('course_id', $course->id)->count());
+
+        // Generated codes are recoverable in plaintext for admin display.
+        $this->assertNotNull(AccessCode::where('course_id', $course->id)->first()->plainCode());
+    }
+
+    public function test_codes_page_groups_one_row_per_course(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $courseA = Course::factory()->paid()->create(['title' => 'Course Alpha']);
+        $courseB = Course::factory()->paid()->create(['title' => 'Course Beta']);
+        app(\App\Actions\GenerateCodeBatchAction::class)->execute($courseA, 4);
+        app(\App\Actions\GenerateCodeBatchAction::class)->execute($courseB, 2);
+
+        Livewire::actingAs($admin)
+            ->test(ListAccessCodes::class)
+            ->assertSuccessful()
+            ->assertSee('Course Alpha')
+            ->assertSee('Course Beta')
+            ->assertCountTableRecords(2); // one row per course, not 6 code rows
     }
 }

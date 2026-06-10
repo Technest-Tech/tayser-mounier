@@ -16,19 +16,34 @@ class AccessCode extends Model
         'course_id',
         'batch_id',
         'code_hash',
+        'code_encrypted',
         'status',
         'redeemed_by',
         'redeemed_at',
         'expires_at',
     ];
 
+    protected $hidden = [
+        'code_hash',
+        'code_encrypted',
+    ];
+
     protected function casts(): array
     {
         return [
             'status' => AccessCodeStatus::class,
+            'code_encrypted' => 'encrypted',
             'redeemed_at' => 'datetime',
             'expires_at' => 'datetime',
         ];
+    }
+
+    /**
+     * The plaintext code for admin display, or null for legacy hash-only codes.
+     */
+    public function plainCode(): ?string
+    {
+        return $this->code_encrypted;
     }
 
     public function course(): BelongsTo

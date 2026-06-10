@@ -2,6 +2,7 @@
 
 namespace App\Services\Bunny;
 
+use GuzzleHttp\Psr7\Utils;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
@@ -84,30 +85,29 @@ class BunnyStreamService
     /**
      * Step 2 — stream the file into the video object. Streamed (not loaded into
      * memory) so large lecture recordings don't blow the PHP memory limit.
+     *
+     * NOTE: we must use withBody() — NOT withOptions(['body' => ...]). The Http
+     * client's put() defaults to the JSON body format and would otherwise
+     * overwrite the body with `[]`, sending an empty file (Bunny then reports
+     * "No compatible streams found"). withBody() pins the raw body + size so
+     * Guzzle sets a correct Content-Length.
      */
     private function uploadBytes(string $guid, string $absolutePath): void
     {
         $library = config('bunny.library_id');
-        $handle = fopen($absolutePath, 'rb');
-
-        if ($handle === false) {
-            throw new RuntimeException("Unable to open file for upload: {$absolutePath}");
-        }
+        $stream = Utils::streamFor(Utils::tryFopen($absolutePath, 'rb'));
 
         try {
             $response = Http::withHeaders([
                 'AccessKey' => (string) config('bunny.api_key'),
-                'Content-Type' => 'application/octet-stream',
             ])
                 ->timeout((int) config('bunny.upload_timeout', 1800))
-                ->withOptions(['body' => $handle])
+                ->withBody($stream, 'application/octet-stream')
                 ->put(self::BASE."/library/{$library}/videos/{$guid}");
         } catch (ConnectionException $e) {
             throw new RuntimeException('Upload to Bunny failed: '.$e->getMessage(), previous: $e);
         } finally {
-            if (is_resource($handle)) {
-                fclose($handle);
-            }
+            $stream->close();
         }
 
         if ($response->failed()) {

@@ -62,7 +62,8 @@ category content is admin-entered; see note below.)
 | id | bigint PK | |
 | course_id | FK → courses | cascade on delete |
 | batch_id | uuid/string | groups a generation batch |
-| code_hash | string | **hashed** code; unique index |
+| code_hash | string | one-way HMAC of the code; unique index (redemption lookup) |
+| code_encrypted | text null | reversible (encrypted) copy of the code so the admin can view/re-share it |
 | status | string enum | `unused` \| `redeemed` (default `unused`) |
 | redeemed_by | FK → users null | set when redeemed |
 | redeemed_at | timestamp null | |

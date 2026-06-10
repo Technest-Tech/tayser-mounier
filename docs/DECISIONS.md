@@ -40,8 +40,15 @@ migrations are written to work on both.
   student redeems it** — the cleanest model for selling per-course.
 - Admin generates codes in **batches**; each batch may set an **optional expiry**
   date (or leave codes permanent).
-- Codes are stored **hashed** (never plaintext at rest). The plaintext is shown
-  to the admin **once** at generation time and exported to CSV.
+- Each code is stored two ways: a one-way **HMAC `code_hash`** (used for fast,
+  secure redemption lookup) and an **encrypted, reversible `code_encrypted`**
+  copy (Laravel `encrypted` cast) so the admin can later **view and re-share**
+  codes. Trade-off: anyone with DB + app-key access could decrypt codes —
+  acceptable for an admin-only panel and required to show codes in the UI. Codes
+  are still never stored as plaintext.
+- Admin codes page is **grouped one row per course** (totals: total / used /
+  available) with a popup showing every code and its usage history, plus
+  per-course CSV export.
 - Redemption is wrapped in a **DB transaction with a row lock** so two students
   can't redeem the same code simultaneously.
 
