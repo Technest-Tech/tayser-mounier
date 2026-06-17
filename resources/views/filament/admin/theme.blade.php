@@ -9,12 +9,12 @@
     .fi-body {
         background-color: #f1f5f9;
         background-attachment: fixed;
-        /* background-image overridden by <x-site-colors /> */
+        /* background-image overridden by site-colors component */
     }
     .dark .fi-body { background-color: #0b1020; }
 
     /* ---- Sidebar shell ------------------------------------------------ */
-    /* background overridden by <x-site-colors /> */
+    /* background overridden by site-colors component */
     .fi-sidebar,
     .fi-sidebar.lg\:bg-transparent {
         box-shadow: 1px 0 0 0 rgba(255,255,255,0.04), 18px 0 40px -24px color-mix(in srgb, var(--brand-950) 65%, transparent);
@@ -41,7 +41,7 @@
 
     /* ---- Nav groups --------------------------------------------------- */
     .fi-sidebar-nav { padding: 0.5rem 0.75rem 1rem; gap: 0.25rem; }
-    /* .fi-sidebar-group-label color set by <x-site-colors /> */
+    /* .fi-sidebar-group-label color set by site-colors component */
     .fi-sidebar-group-label {
         text-transform: uppercase;
         font-size: 0.6875rem !important;
@@ -51,7 +51,7 @@
     }
 
     /* ---- Nav items ---------------------------------------------------- */
-    /* .fi-sidebar-item-button color set by <x-site-colors /> */
+    /* .fi-sidebar-item-button color set by site-colors component */
     .fi-sidebar-item-button {
         border-radius: 0.75rem !important;
         padding: 0.6rem 0.7rem !important;
@@ -65,7 +65,7 @@
         color: #fff !important;
     }
     .fi-sidebar-item-label { color: inherit !important; font-weight: 600; }
-    /* .fi-sidebar-item-icon color set by <x-site-colors /> */
+    /* .fi-sidebar-item-icon color set by site-colors component */
 
     /* Active item */
     .fi-sidebar-item-active .fi-sidebar-item-button {
@@ -82,7 +82,7 @@
         height: 1.25rem;
         width: 0.25rem;
         border-radius: 9999px;
-        /* color + shadow set by <x-site-colors /> */
+        /* color + shadow set by site-colors component */
     }
     .fi-sidebar-item-active .fi-sidebar-item-label { color: #fff !important; }
     .fi-sidebar-item-active .fi-sidebar-item-icon  { color: #fff !important; }
@@ -114,7 +114,7 @@
     .fi-section, .fi-wi-stats-overview-stat, .fi-ta-ctn {
         border-radius: 1rem !important;
     }
-    /* .fi-wi-stats-overview-stat box-shadow set by <x-site-colors /> */
+    /* .fi-wi-stats-overview-stat box-shadow set by site-colors component */
     .fi-wi-stats-overview-stat { transition: transform .15s ease, box-shadow .15s ease; }
     .fi-wi-stats-overview-stat:hover { transform: translateY(-2px); }
 
