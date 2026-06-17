@@ -3,6 +3,25 @@
 @tailwind utilities;
 
 @layer base {
+    :root {
+        /* Defaults — overridden at runtime by <x-site-colors /> */
+        --brand:      #4f46e5;
+        --brand-50:   #eef2ff;
+        --brand-100:  #e0e7ff;
+        --brand-200:  #c7d2fe;
+        --brand-300:  #a5b4fc;
+        --brand-400:  #818cf8;
+        --brand-500:  #6366f1;
+        --brand-600:  #4f46e5;
+        --brand-700:  #4338ca;
+        --brand-800:  #3730a3;
+        --brand-900:  #312e81;
+        --brand-950:  #1e1b4b;
+        --accent:     #f59e0b;
+        --accent-400: #fbbf24;
+        --accent-500: #f59e0b;
+        --accent-600: #d97706;
+    }
     body {
         @apply bg-slate-50 text-slate-800 antialiased;
     }
@@ -19,16 +38,22 @@
                focus:ring-offset-2 disabled:opacity-60 disabled:pointer-events-none;
     }
     .btn-primary {
-        @apply btn bg-brand-600 text-white shadow-sm hover:bg-brand-700
-               focus:ring-brand-500;
+        @apply btn text-white shadow-sm;
+        background-color: var(--brand-600);
+        --tw-ring-color: var(--brand-500);
     }
+    .btn-primary:hover { background-color: var(--brand-700); }
+
     .btn-accent {
-        @apply btn bg-accent-500 text-white shadow-sm hover:bg-accent-600
-               focus:ring-accent-400;
+        @apply btn text-white shadow-sm;
+        background-color: var(--accent-500);
+        --tw-ring-color: var(--accent-400);
     }
+    .btn-accent:hover { background-color: var(--accent-600); }
+
     .btn-outline {
-        @apply btn border border-slate-300 bg-white text-slate-700
-               hover:bg-slate-50 focus:ring-brand-500;
+        @apply btn border border-slate-300 bg-white text-slate-700 hover:bg-slate-50;
+        --tw-ring-color: var(--brand-500);
     }
     .btn-ghost {
         @apply btn text-slate-600 hover:bg-slate-100;
@@ -41,20 +66,25 @@
 
     /* Badges --------------------------------------------------------------- */
     .badge {
-        @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1
-               text-xs font-bold;
+        @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold;
     }
     .badge-free {
         @apply badge bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20;
     }
     .badge-paid {
-        @apply badge bg-brand-50 text-brand-700 ring-1 ring-brand-600/20;
+        @apply badge ring-1;
+        background-color: var(--brand-50);
+        color: var(--brand-700);
+        --tw-ring-color: color-mix(in srgb, var(--brand-600) 20%, transparent);
     }
 
     /* Form controls -------------------------------------------------------- */
     .input {
-        @apply w-full rounded-xl border-slate-300 bg-white text-slate-800
-               shadow-sm focus:border-brand-500 focus:ring-brand-500;
+        @apply w-full rounded-xl border-slate-300 bg-white text-slate-800 shadow-sm;
+    }
+    .input:focus {
+        border-color: var(--brand-500);
+        --tw-ring-color: var(--brand-500);
     }
 
     /* Layout --------------------------------------------------------------- */
@@ -64,15 +94,16 @@
 
     /* Brand mark ----------------------------------------------------------- */
     .brand-mark {
-        @apply grid place-items-center rounded-2xl bg-gradient-to-br from-brand-500
-               to-brand-800 font-extrabold text-white shadow-lg shadow-brand-900/25
-               ring-1 ring-white/10;
+        @apply grid place-items-center rounded-2xl font-extrabold text-white shadow-lg ring-1 ring-white/10;
+        background: linear-gradient(135deg, var(--brand-500), var(--brand-800));
+        box-shadow: 0 10px 15px -3px color-mix(in srgb, var(--brand-900) 25%, transparent);
     }
 
     /* Eyebrow pill --------------------------------------------------------- */
     .eyebrow {
         @apply inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1.5
-               text-xs font-bold text-brand-100 ring-1 ring-white/20 backdrop-blur;
+               text-xs font-bold ring-1 ring-white/20 backdrop-blur;
+        color: var(--brand-100);
     }
 
     /* Feature card --------------------------------------------------------- */
@@ -81,15 +112,16 @@
                hover:-translate-y-0.5 hover:shadow-card-hover;
     }
     .feature-icon {
-        @apply grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-brand-600
-               ring-1 ring-brand-600/10;
+        @apply grid h-12 w-12 place-items-center rounded-2xl ring-1;
+        background-color: var(--brand-50);
+        color: var(--brand-600);
+        --tw-ring-color: color-mix(in srgb, var(--brand-600) 10%, transparent);
     }
 }
 
 @layer utilities {
-    /* Subtle dotted backdrop for hero sections */
     .bg-dots {
-        background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.18) 1px, transparent 0);
+        background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.18) 1px, transparent 0);
         background-size: 26px 26px;
     }
 }

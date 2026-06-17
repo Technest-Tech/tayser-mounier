@@ -1,17 +1,17 @@
 <?php
 
 return [
-    'title' => 'الكورسات',
+    'title' => 'الدورات',
     'detail' => [
-        'curriculum' => 'محتوى الكورس',
-        'about' => 'نبذة عن الكورس',
+        'curriculum' => 'محتوى الدورة',
+        'about' => 'نبذة عن الدورة',
         'preview' => 'معاينة',
         'preview_available' => 'معاينة مجانية',
         'enroll_free' => 'اشترك مجاناً',
         'unlock' => 'افتح بكود الوصول',
         'start_learning' => 'ابدأ المذاكرة',
         'continue_learning' => 'كمّل مذاكرة',
-        'enrolled' => 'إنت مشترك في الكورس ده',
+        'enrolled' => 'إنت مشترك في الدورة دي',
         'total_lessons' => ':count درس',
         'free_badge' => 'مجاني',
         'login_to_enroll' => 'سجّل دخولك عشان تشترك',
@@ -26,8 +26,8 @@ return [
         'previous' => 'الدرس اللي قبله',
     ],
     'my' => [
-        'title' => 'كورساتي',
-        'empty' => 'لسه مشتركتش في أي كورس.',
-        'browse' => 'اتفرّج على الكورسات',
+        'title' => 'دوراتي',
+        'empty' => 'لسه مشتركتش في أي دورة.',
+        'browse' => 'اتفرّج على الدورات',
     ],
 ];

@@ -40,11 +40,11 @@ class Watch extends Component
     }
 
     /**
-     * A lesson is watchable if it is a free preview, or the user is enrolled.
+     * A lesson is watchable if the course is free, it is a preview, or the user is enrolled.
      */
     protected function authorizeLesson(Lesson $lesson): void
     {
-        abort_unless($lesson->is_preview || $this->enrolled, 403);
+        abort_unless($this->course->is_free || $lesson->is_preview || $this->enrolled, 403);
     }
 
     public function selectLesson(Lesson $lesson): void

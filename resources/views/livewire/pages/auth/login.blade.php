@@ -67,5 +67,14 @@ new #[Layout('layouts.guest')] class extends Component
                 {{ __('Log in') }}
             </x-primary-button>
         </div>
+
+        @if (Route::has('register'))
+            <div class="mt-4 text-center text-sm text-gray-600">
+                {{ __("Don't have an account?") }}
+                <a class="underline text-gray-900 hover:text-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('register') }}" wire:navigate>
+                    {{ __('Create account') }}
+                </a>
+            </div>
+        @endif
     </form>
 </div>
