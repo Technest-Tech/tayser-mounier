@@ -10,19 +10,19 @@
             <div class="max-w-2xl">
                 <span class="eyebrow">
                     <span class="inline-block h-1.5 w-1.5 rounded-full bg-accent-400"></span>
-                    {{ __('messages.home.eyebrow') }}
+                    {{ \App\Models\Setting::get('hero_eyebrow', __('messages.home.eyebrow')) }}
                 </span>
 
                 <h1 class="mt-6 text-4xl font-extrabold leading-[1.15] text-white sm:text-5xl">
-                    {{ __('messages.home.hero_title') }}
+                    {{ \App\Models\Setting::get('hero_title', __('messages.home.hero_title')) }}
                 </h1>
                 <p class="mt-5 text-lg leading-relaxed text-brand-100">
-                    {{ __('messages.home.hero_subtitle') }}
+                    {{ \App\Models\Setting::get('hero_subtitle', __('messages.home.hero_subtitle')) }}
                 </p>
 
                 <div class="mt-8 flex flex-wrap gap-3">
                     <a href="{{ route('courses.index') }}" class="btn-accent px-6 py-3 text-base shadow-lg shadow-accent-600/30">
-                        {{ __('messages.home.browse_courses') }}
+                        {{ \App\Models\Setting::get('hero_button_text', __('messages.home.browse_courses')) }}
                     </a>
                     @guest
                         <a href="{{ route('register') }}" class="btn px-6 py-3 text-base bg-white/10 text-white ring-1 ring-white/30 backdrop-blur hover:bg-white/20">
@@ -104,6 +104,28 @@
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach ($featured as $course)
                     <x-course-card :course="$course" />
+                @endforeach
+            </div>
+        @endif
+    </section>
+
+    {{-- Featured books --}}
+    <section class="container-app pb-16">
+        <div class="mb-8 flex items-end justify-between">
+            <h2 class="text-2xl font-extrabold text-slate-900">{{ __('messages.home.featured_books') }}</h2>
+            <a href="{{ route('books.index') }}" class="text-sm font-bold text-brand-700 hover:underline">
+                {{ __('messages.home.view_all') }} →
+            </a>
+        </div>
+
+        @if ($featuredBooks->isEmpty())
+            <div class="card grid place-items-center p-16 text-center">
+                <p class="text-slate-500">{{ __('books.no_results') }}</p>
+            </div>
+        @else
+            <div class="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
+                @foreach ($featuredBooks as $book)
+                    <x-book-card :book="$book" />
                 @endforeach
             </div>
         @endif

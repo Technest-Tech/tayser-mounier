@@ -9,6 +9,10 @@ return [
         'draft' => 'Draft',
         'published' => 'Published',
     ],
+    'book_status' => [
+        'draft' => 'Draft',
+        'published' => 'Published',
+    ],
     'lesson_source' => [
         'bunny' => 'Bunny Stream',
         'youtube' => 'YouTube',

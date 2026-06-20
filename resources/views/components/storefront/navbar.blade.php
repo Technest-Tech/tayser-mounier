@@ -4,15 +4,24 @@
 >
     <nav class="container-app flex h-16 items-center justify-between gap-4">
         {{-- Brand --}}
+        @php
+            $siteLogo  = \App\Models\Setting::get('site_logo');
+            $siteTitle = \App\Models\Setting::get('site_title', __('messages.app_name'));
+        @endphp
         <a href="{{ route('home') }}" class="flex items-center gap-2.5">
-            <span class="brand-mark h-9 w-9 text-lg">ت</span>
-            <span class="text-lg font-extrabold tracking-tight text-slate-900">{{ __('messages.app_name') }}</span>
+            @if ($siteLogo)
+                <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($siteLogo) }}" alt="{{ $siteTitle }}" class="h-9 w-9 rounded-lg object-contain">
+            @else
+                <span class="brand-mark h-9 w-9 text-lg">ت</span>
+            @endif
+            <span class="text-lg font-extrabold tracking-tight text-slate-900">{{ $siteTitle }}</span>
         </a>
 
         {{-- Desktop links --}}
         <div class="hidden items-center gap-1 md:flex">
             <a href="{{ route('home') }}" class="btn-ghost">{{ __('messages.nav.home') }}</a>
             <a href="{{ route('courses.index') }}" class="btn-ghost">{{ __('messages.nav.courses') }}</a>
+            <a href="{{ route('books.index') }}" class="btn-ghost">{{ __('messages.nav.books') }}</a>
             @auth
                 <a href="{{ route('my-courses') }}" class="btn-ghost">{{ __('messages.nav.my_courses') }}</a>
             @endauth
@@ -63,6 +72,7 @@
         <div class="container-app flex flex-col py-2">
             <a href="{{ route('home') }}" class="py-2 text-sm font-semibold">{{ __('messages.nav.home') }}</a>
             <a href="{{ route('courses.index') }}" class="py-2 text-sm font-semibold">{{ __('messages.nav.courses') }}</a>
+            <a href="{{ route('books.index') }}" class="py-2 text-sm font-semibold">{{ __('messages.nav.books') }}</a>
             @auth
                 <a href="{{ route('my-courses') }}" class="py-2 text-sm font-semibold">{{ __('messages.nav.my_courses') }}</a>
                 @if (auth()->user()->isAdmin())

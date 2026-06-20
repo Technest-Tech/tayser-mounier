@@ -7,6 +7,7 @@ return [
     'nav' => [
         'home' => 'الرئيسية',
         'courses' => 'الدورات',
+        'books' => 'الكتب',
         'my_courses' => 'دوراتي',
         'dashboard' => 'لوحة التحكم',
         'login' => 'تسجيل الدخول',
@@ -23,6 +24,7 @@ return [
         'browse_courses' => 'اتفرّج على الدورات',
         'browse_free' => 'ابدأ بدورة مجانية',
         'featured' => 'أحدث الدورات',
+        'featured_books' => 'أحدث الكتب',
         'view_all' => 'شوف الكل',
 
         'stats' => [

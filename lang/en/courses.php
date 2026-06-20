@@ -24,6 +24,11 @@ return [
         'locked' => 'Locked — enroll to watch',
         'next' => 'Next lesson',
         'previous' => 'Previous lesson',
+        'audio' => 'Voice file',
+        'audio_unsupported' => 'Your browser does not support the audio player.',
+        'pdf' => 'PDF document',
+        'open_pdf' => 'Open in new tab',
+        'no_content' => 'No content has been added to this lesson yet.',
     ],
     'my' => [
         'title' => 'My Courses',

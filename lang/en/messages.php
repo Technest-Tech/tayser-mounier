@@ -7,6 +7,7 @@ return [
     'nav' => [
         'home' => 'Home',
         'courses' => 'Courses',
+        'books' => 'Books',
         'my_courses' => 'My Courses',
         'dashboard' => 'Dashboard',
         'login' => 'Log in',
@@ -23,6 +24,7 @@ return [
         'browse_courses' => 'Browse courses',
         'browse_free' => 'Start with a free course',
         'featured' => 'Latest courses',
+        'featured_books' => 'Latest books',
         'view_all' => 'View all',
 
         'stats' => [

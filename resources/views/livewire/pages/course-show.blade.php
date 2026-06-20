@@ -72,7 +72,15 @@
         {{-- Sidebar / purchase card --}}
         <aside class="lg:sticky lg:top-24 lg:self-start">
             <div class="card overflow-hidden">
-                <div class="aspect-video w-full bg-gradient-to-br from-brand-500 to-brand-800"></div>
+                <div class="aspect-video w-full overflow-hidden bg-gradient-to-br from-brand-500 to-brand-800">
+                    @if ($course->thumbnail)
+                        <img
+                            src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($course->thumbnail) }}"
+                            alt="{{ $course->title }}"
+                            class="h-full w-full object-cover"
+                        >
+                    @endif
+                </div>
                 <div class="space-y-4 p-6">
                     @if (! $course->is_free)
                         <div class="text-3xl font-extrabold text-slate-900">

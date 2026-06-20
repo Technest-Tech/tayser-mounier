@@ -9,6 +9,10 @@ return [
         'draft' => 'مسودة',
         'published' => 'منشورة',
     ],
+    'book_status' => [
+        'draft' => 'مسودة',
+        'published' => 'منشور',
+    ],
     'lesson_source' => [
         'bunny' => 'Bunny Stream',
         'youtube' => 'يوتيوب',

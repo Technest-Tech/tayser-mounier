@@ -39,33 +39,59 @@ class LessonsRelationManager extends RelationManager
                 ->numeric()
                 ->default(0),
 
-            Forms\Components\Select::make('source')
-                ->label(__('admin.source'))
-                ->options(collect(LessonSource::cases())->mapWithKeys(
-                    fn ($s) => [$s->value => $s->label()]
-                ))
-                ->default(LessonSource::Bunny->value)
-                ->live()
-                ->required(),
+            // A lesson can carry any combination of a video, a voice file and a
+            // PDF. Each block is optional; at least one is enforced on save.
+            Forms\Components\Section::make(__('admin.lesson_content'))
+                ->description(__('admin.lesson_content_hint'))
+                ->columns(2)
+                ->schema([
+                    Forms\Components\Select::make('source')
+                        ->label(__('admin.source'))
+                        ->options(collect(LessonSource::cases())->mapWithKeys(
+                            fn ($s) => [$s->value => $s->label()]
+                        ))
+                        ->default(LessonSource::Bunny->value)
+                        ->live()
+                        ->required(),
 
-            // The admin uploads the video in the Bunny dashboard, then pastes the
-            // video's URL (or raw GUID) here. We extract the id on save.
-            Forms\Components\TextInput::make('video_id')
-                ->label(fn (Forms\Get $get) => $get('source') === LessonSource::Youtube->value
-                    ? __('admin.youtube_id')
-                    : __('admin.bunny_id'))
-                ->helperText(fn (Forms\Get $get) => $get('source') === LessonSource::Youtube->value
-                    ? __('admin.youtube_id_hint')
-                    : __('admin.bunny_id_hint'))
-                ->placeholder(fn (Forms\Get $get) => $get('source') === LessonSource::Youtube->value
-                    ? 'https://youtu.be/…'
-                    : 'https://iframe.mediadelivery.net/embed/…')
-                ->required()
-                ->maxLength(255)
+                    // The admin uploads the video in the Bunny dashboard, then pastes the
+                    // video's URL (or raw GUID) here. We extract the id on save.
+                    Forms\Components\TextInput::make('video_id')
+                        ->label(fn (Forms\Get $get) => $get('source') === LessonSource::Youtube->value
+                            ? __('admin.youtube_id')
+                            : __('admin.bunny_id'))
+                        ->helperText(fn (Forms\Get $get) => $get('source') === LessonSource::Youtube->value
+                            ? __('admin.youtube_id_hint')
+                            : __('admin.bunny_id_hint'))
+                        ->placeholder(fn (Forms\Get $get) => $get('source') === LessonSource::Youtube->value
+                            ? 'https://youtu.be/…'
+                            : 'https://iframe.mediadelivery.net/embed/…')
+                        ->maxLength(255)
+                        ->columnSpanFull(),
+
+                    Forms\Components\FileUpload::make('audio_path')
+                        ->label(__('admin.audio_file'))
+                        ->helperText(__('admin.audio_file_hint'))
+                        ->disk('local')
+                        ->directory('lesson-audio')
+                        ->acceptedFileTypes(['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/x-m4a', 'audio/aac'])
+                        ->downloadable()
+                        ->maxSize(51200),
+
+                    Forms\Components\FileUpload::make('pdf_path')
+                        ->label(__('admin.pdf_file'))
+                        ->helperText(__('admin.pdf_file_hint'))
+                        ->disk('local')
+                        ->directory('lesson-pdf')
+                        ->acceptedFileTypes(['application/pdf'])
+                        ->downloadable()
+                        ->maxSize(51200),
+                ])
                 ->columnSpanFull(),
 
             Forms\Components\TextInput::make('duration')
                 ->label(__('admin.duration_seconds'))
+                ->helperText(__('admin.duration_hint'))
                 ->numeric()
                 ->suffix('s'),
 
@@ -100,11 +126,16 @@ class LessonsRelationManager extends RelationManager
                     ->label(__('admin.section'))
                     ->badge()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('source')
-                    ->label(__('admin.source'))
+                Tables\Columns\TextColumn::make('contents')
+                    ->label(__('admin.lesson_content'))
                     ->badge()
-                    ->formatStateUsing(fn (LessonSource $state) => $state->label())
-                    ->color(fn (LessonSource $state) => $state === LessonSource::Bunny ? 'success' : 'danger'),
+                    ->state(fn (Lesson $record): array => $this->lessonContentBadges($record))
+                    ->color(fn (string $state): string => match ($state) {
+                        __('admin.content_video') => 'success',
+                        __('admin.content_audio') => 'warning',
+                        __('admin.content_pdf') => 'danger',
+                        default => 'gray',
+                    }),
                 Tables\Columns\IconColumn::make('is_preview')
                     ->label(__('admin.preview'))
                     ->boolean(),
@@ -132,6 +163,28 @@ class LessonsRelationManager extends RelationManager
                     ->mutateFormDataUsing(fn (array $data): array => $this->normalizeVideoId($data)),
                 Tables\Actions\DeleteAction::make(),
             ]);
+    }
+
+    /**
+     * Labels for the content types a lesson currently carries.
+     *
+     * @return array<int, string>
+     */
+    protected function lessonContentBadges(Lesson $record): array
+    {
+        $badges = [];
+
+        if ($record->hasVideo()) {
+            $badges[] = __('admin.content_video');
+        }
+        if ($record->hasAudio()) {
+            $badges[] = __('admin.content_audio');
+        }
+        if ($record->hasPdf()) {
+            $badges[] = __('admin.content_pdf');
+        }
+
+        return $badges;
     }
 
     /**

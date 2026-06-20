@@ -18,6 +18,8 @@ class Lesson extends Model
         'title',
         'source',
         'video_id',
+        'audio_path',
+        'pdf_path',
         'duration',
         'is_preview',
         'order',
@@ -46,5 +48,25 @@ class Lesson extends Model
     public function isPreview(): bool
     {
         return $this->is_preview;
+    }
+
+    public function hasVideo(): bool
+    {
+        return filled($this->video_id);
+    }
+
+    public function hasAudio(): bool
+    {
+        return filled($this->audio_path);
+    }
+
+    public function hasPdf(): bool
+    {
+        return filled($this->pdf_path);
+    }
+
+    public function hasContent(): bool
+    {
+        return $this->hasVideo() || $this->hasAudio() || $this->hasPdf();
     }
 }
