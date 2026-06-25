@@ -13,7 +13,7 @@
                     {{ \App\Models\Setting::get('hero_eyebrow', __('messages.home.eyebrow')) }}
                 </span>
 
-                <h1 class="mt-6 text-4xl font-extrabold leading-[1.15] text-white sm:text-5xl">
+                <h1 class="mt-6 text-4xl font-extrabold leading-[1.4] text-white sm:text-5xl">
                     {{ \App\Models\Setting::get('hero_title', __('messages.home.hero_title')) }}
                 </h1>
                 <p class="mt-5 text-lg leading-relaxed text-brand-100">
@@ -114,7 +114,7 @@
         <div class="mb-8 flex items-end justify-between">
             <h2 class="text-2xl font-extrabold text-slate-900">{{ __('messages.home.featured_books') }}</h2>
             <a href="{{ route('books.index') }}" class="text-sm font-bold text-brand-700 hover:underline">
-                {{ __('messages.home.view_all') }} →
+                {{ __('messages.home.view_all_books') }} →
             </a>
         </div>
 

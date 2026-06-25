@@ -45,6 +45,23 @@ class Lesson extends Model
         return $this->hasMany(LessonProgress::class);
     }
 
+    public function questions(): HasMany
+    {
+        return $this->hasMany(LessonQuestion::class)->orderBy('order');
+    }
+
+    public function quizAttempts(): HasMany
+    {
+        return $this->hasMany(LessonQuizAttempt::class);
+    }
+
+    public function hasQuiz(): bool
+    {
+        return $this->relationLoaded('questions')
+            ? $this->questions->isNotEmpty()
+            : $this->questions()->exists();
+    }
+
     public function isPreview(): bool
     {
         return $this->is_preview;

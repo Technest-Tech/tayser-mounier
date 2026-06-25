@@ -184,6 +184,167 @@
                     </div>
                 @endunless
 
+                {{-- Lesson quiz / exam --}}
+                @if ($questions->isNotEmpty())
+                    <div class="mt-8" wire:key="quiz-{{ $lesson->id }}">
+                        <div class="rounded-2xl bg-slate-800/60 p-6 ring-1 ring-white/10">
+                            {{-- Header --}}
+                            <div class="flex items-start gap-3">
+                                <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-500/20 text-brand-300">
+                                    <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25Z"/></svg>
+                                </span>
+                                <div>
+                                    <h2 class="text-xl font-extrabold text-white">{{ __('quiz.title') }}</h2>
+                                    <p class="mt-0.5 text-sm text-slate-400">
+                                        @if ($quizSubmitted)
+                                            {{ __('quiz.questions_count', ['count' => $questions->count()]) }}
+                                        @else
+                                            {{ __('quiz.subtitle') }}
+                                        @endif
+                                    </p>
+                                </div>
+                            </div>
+
+                            @if (! $quizSubmitted)
+                                {{-- Take the quiz --}}
+                                <div class="mt-6 space-y-5">
+                                    @foreach ($questions as $qi => $q)
+                                        <div class="rounded-xl bg-slate-900/50 p-5">
+                                            <span class="text-xs font-bold text-brand-300">
+                                                {{ __('quiz.question_num', ['num' => $qi + 1, 'total' => $questions->count()]) }}
+                                            </span>
+                                            <p class="mt-1 text-base font-bold text-white">{{ $q->question }}</p>
+
+                                            <div class="mt-4 grid gap-2.5 sm:grid-cols-2">
+                                                @foreach ($q->options as $opt)
+                                                    @php $selected = ($answers[$q->id] ?? null) == $opt->id; @endphp
+                                                    <button
+                                                        type="button"
+                                                        wire:click="chooseOption({{ $q->id }}, {{ $opt->id }})"
+                                                        @class([
+                                                            'flex items-center gap-3 rounded-xl border px-4 py-3 text-start text-sm font-semibold transition',
+                                                            'border-brand-400 bg-brand-500/20 text-white' => $selected,
+                                                            'border-white/10 bg-white/5 text-slate-200 hover:border-white/25 hover:bg-white/10' => ! $selected,
+                                                        ])
+                                                    >
+                                                        <span @class([
+                                                            'grid h-5 w-5 shrink-0 place-items-center rounded-full border-2 transition',
+                                                            'border-brand-300 bg-brand-400' => $selected,
+                                                            'border-slate-500' => ! $selected,
+                                                        ])>
+                                                            @if ($selected)
+                                                                <span class="h-2 w-2 rounded-full bg-white"></span>
+                                                            @endif
+                                                        </span>
+                                                        <span class="flex-1">{{ $opt->text }}</span>
+                                                    </button>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+
+                                @php $allAnswered = collect($questions)->every(fn ($q) => isset($answers[$q->id])); @endphp
+                                <div class="mt-6 flex flex-wrap items-center gap-3">
+                                    <button
+                                        wire:click="submitQuiz"
+                                        @disabled(! $allAnswered)
+                                        @class([
+                                            'btn',
+                                            'bg-brand-600 text-white hover:bg-brand-700' => $allAnswered,
+                                            'cursor-not-allowed bg-white/10 text-slate-400' => ! $allAnswered,
+                                        ])
+                                    >
+                                        {{ __('quiz.submit') }}
+                                    </button>
+                                    @unless ($allAnswered)
+                                        <span class="text-sm text-slate-400">{{ __('quiz.answer_all_first') }}</span>
+                                    @endunless
+                                </div>
+                            @else
+                                {{-- Results --}}
+                                @php
+                                    $total = $questions->count();
+                                    $pct = $total ? (int) round($quizScore / $total * 100) : 0;
+                                    $ringColor = $pct === 100 ? '#10b981' : ($pct >= 50 ? '#6366f1' : '#f43f5e');
+                                    $msg = $pct === 100 ? __('quiz.result_excellent') : ($pct >= 50 ? __('quiz.result_good') : __('quiz.result_try_again'));
+                                @endphp
+
+                                <div class="mt-6 flex flex-col items-center gap-5 rounded-2xl bg-slate-900/50 p-6 text-center sm:flex-row sm:text-start">
+                                    <div
+                                        class="relative grid h-28 w-28 shrink-0 place-items-center rounded-full"
+                                        style="background: conic-gradient({{ $ringColor }} {{ $pct }}%, rgba(255,255,255,.10) 0);"
+                                    >
+                                        <div class="grid h-[5.5rem] w-[5.5rem] place-items-center rounded-full bg-slate-900">
+                                            <span class="text-2xl font-extrabold text-white">{{ $pct }}%</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-sm font-bold uppercase tracking-wide text-slate-400">{{ __('quiz.your_result') }}</h3>
+                                        <p class="mt-1 text-2xl font-extrabold" style="color: {{ $ringColor }};">{{ $msg }}</p>
+                                        <p class="mt-1 text-sm text-slate-300">{{ __('quiz.score_line', ['score' => $quizScore, 'total' => $total]) }}</p>
+                                    </div>
+                                </div>
+
+                                <div class="mt-6 space-y-4">
+                                    @foreach ($questions as $qi => $q)
+                                        @php
+                                            $correct = $q->options->firstWhere('is_correct', true);
+                                            $chosenId = $answers[$q->id] ?? null;
+                                            $isRight = $correct && (int) $chosenId === $correct->id;
+                                        @endphp
+                                        <div class="rounded-xl bg-slate-900/50 p-5">
+                                            <div class="flex items-start justify-between gap-3">
+                                                <p class="text-base font-bold text-white">
+                                                    <span class="text-slate-400">{{ $qi + 1 }}.</span> {{ $q->question }}
+                                                </p>
+                                                <span @class([
+                                                    'badge shrink-0',
+                                                    'bg-emerald-500/20 text-emerald-300' => $isRight,
+                                                    'bg-rose-500/20 text-rose-300' => ! $isRight,
+                                                ])>
+                                                    @if ($isRight) ✓ {{ __('quiz.correct') }} @else ✕ {{ __('quiz.incorrect') }} @endif
+                                                </span>
+                                            </div>
+
+                                            <div class="mt-3 space-y-2">
+                                                @foreach ($q->options as $opt)
+                                                    @php
+                                                        $optCorrect = $opt->is_correct;
+                                                        $optChosen = (int) $chosenId === $opt->id;
+                                                    @endphp
+                                                    <div @class([
+                                                        'flex items-center gap-3 rounded-lg border px-4 py-2.5 text-sm',
+                                                        'border-emerald-400/40 bg-emerald-500/10 text-emerald-200' => $optCorrect,
+                                                        'border-rose-400/40 bg-rose-500/10 text-rose-200' => $optChosen && ! $optCorrect,
+                                                        'border-white/10 bg-white/5 text-slate-400' => ! $optCorrect && ! $optChosen,
+                                                    ])>
+                                                        <span class="shrink-0 font-bold">
+                                                            @if ($optCorrect) ✓ @elseif ($optChosen) ✕ @else • @endif
+                                                        </span>
+                                                        <span class="flex-1 font-semibold">{{ $opt->text }}</span>
+                                                        @if ($optChosen)
+                                                            <span class="shrink-0 text-xs font-bold opacity-80">{{ __('quiz.your_answer') }}</span>
+                                                        @elseif ($optCorrect)
+                                                            <span class="shrink-0 text-xs font-bold opacity-80">{{ __('quiz.correct_answer') }}</span>
+                                                        @endif
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+
+                                <div class="mt-6">
+                                    <button wire:click="retakeQuiz" class="btn bg-white/10 text-white ring-1 ring-white/20 hover:bg-white/20">
+                                        ↺ {{ __('quiz.retake') }}
+                                    </button>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+
                 {{-- Prev / next --}}
                 <div class="mt-6 flex items-center justify-between gap-3">
                     @if ($previous && ($previous->is_preview || $enrolled))

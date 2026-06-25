@@ -25,7 +25,8 @@ return [
         'browse_free' => 'Start with a free course',
         'featured' => 'Latest courses',
         'featured_books' => 'Latest books',
-        'view_all' => 'View all',
+        'view_all' => 'View all courses',
+        'view_all_books' => 'View all books',
 
         'stats' => [
             'courses' => 'Courses available',

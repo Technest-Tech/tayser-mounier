@@ -84,6 +84,18 @@ return [
     'preview_video' => 'Preview video',
     'add_lesson' => 'Add lesson',
 
+    // Lesson quiz / questions
+    'quiz' => 'Quiz (questions)',
+    'quiz_hint' => 'Optional. Add multiple-choice questions students answer after the lesson. Mark the correct option for each question.',
+    'questions' => 'Questions',
+    'add_question' => 'Add question',
+    'question_text' => 'Question',
+    'options' => 'Choices',
+    'add_option' => 'Add choice',
+    'option_text' => 'Choice',
+    'is_correct' => 'Correct answer',
+    'is_correct_hint' => 'Turn on for the right choice.',
+
     // Access codes
     'batch' => 'Batch',
     'redeemed_by' => 'Redeemed by',

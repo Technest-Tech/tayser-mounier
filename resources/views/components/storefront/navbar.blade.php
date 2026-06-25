@@ -10,9 +10,9 @@
         @endphp
         <a href="{{ route('home') }}" class="flex items-center gap-2.5">
             @if ($siteLogo)
-                <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($siteLogo) }}" alt="{{ $siteTitle }}" class="h-9 w-9 rounded-lg object-contain">
+                <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($siteLogo) }}" alt="{{ $siteTitle }}" class="h-12 w-12 rounded-lg object-contain">
             @else
-                <span class="brand-mark h-9 w-9 text-lg">ت</span>
+                <span class="brand-mark h-12 w-12 text-xl">ت</span>
             @endif
             <span class="text-lg font-extrabold tracking-tight text-slate-900">{{ $siteTitle }}</span>
         </a>

@@ -99,6 +99,49 @@ class LessonsRelationManager extends RelationManager
                 ->label(__('admin.is_preview'))
                 ->helperText(__('admin.is_preview_hint'))
                 ->columnSpanFull(),
+
+            // Optional multiple-choice quiz the student takes after the lesson.
+            // Each question carries its own choices; mark the correct one.
+            Forms\Components\Section::make(__('admin.quiz'))
+                ->description(__('admin.quiz_hint'))
+                ->icon('heroicon-o-clipboard-document-check')
+                ->collapsible()
+                ->collapsed(fn (?Lesson $record): bool => ! $record || ! $record->hasQuiz())
+                ->schema([
+                    Forms\Components\Repeater::make('questions')
+                        ->label(__('admin.questions'))
+                        ->addActionLabel(__('admin.add_question'))
+                        ->collapsible()
+                        ->defaultItems(0)
+                        ->itemLabel(fn (array $state): ?string => $state['question'] ?? null)
+                        ->schema([
+                            Forms\Components\TextInput::make('question')
+                                ->label(__('admin.question_text'))
+                                ->required()
+                                ->maxLength(500)
+                                ->columnSpanFull(),
+
+                            Forms\Components\Repeater::make('options')
+                                ->label(__('admin.options'))
+                                ->addActionLabel(__('admin.add_option'))
+                                ->minItems(2)
+                                ->defaultItems(2)
+                                ->columnSpanFull()
+                                ->grid(2)
+                                ->schema([
+                                    Forms\Components\TextInput::make('text')
+                                        ->label(__('admin.option_text'))
+                                        ->required()
+                                        ->maxLength(255),
+
+                                    Forms\Components\Toggle::make('is_correct')
+                                        ->label(__('admin.is_correct'))
+                                        ->helperText(__('admin.is_correct_hint'))
+                                        ->inline(false),
+                                ]),
+                        ]),
+                ])
+                ->columnSpanFull(),
         ])->columns(2);
     }
 
@@ -143,7 +186,8 @@ class LessonsRelationManager extends RelationManager
             ->headerActions([
                 Tables\Actions\CreateAction::make()
                     ->label(__('admin.add_lesson'))
-                    ->mutateFormDataUsing(fn (array $data): array => $this->normalizeVideoId($data)),
+                    ->mutateFormDataUsing(fn (array $data): array => $this->normalizeVideoId($data))
+                    ->after(fn (Lesson $record, array $data) => $this->syncQuestions($record, $data)),
             ])
             ->actions([
                 Tables\Actions\Action::make('preview')
@@ -160,7 +204,9 @@ class LessonsRelationManager extends RelationManager
                     ->modalCancelActionLabel(__('admin.close'))
                     ->visible(fn (Lesson $record): bool => filled($record->video_id)),
                 Tables\Actions\EditAction::make()
-                    ->mutateFormDataUsing(fn (array $data): array => $this->normalizeVideoId($data)),
+                    ->mutateRecordDataUsing(fn (array $data, Lesson $record): array => $this->fillQuestions($data, $record))
+                    ->mutateFormDataUsing(fn (array $data): array => $this->normalizeVideoId($data))
+                    ->after(fn (Lesson $record, array $data) => $this->syncQuestions($record, $data)),
                 Tables\Actions\DeleteAction::make(),
             ]);
     }
@@ -241,6 +287,52 @@ class LessonsRelationManager extends RelationManager
         $data['video_id'] = $value;
 
         return $data;
+    }
+
+    /**
+     * Load the lesson's questions (and their options) into the form's repeater
+     * state when the edit modal opens. Relationship repeaters don't re-hydrate
+     * reliably inside RelationManager modals, so we fill them by hand.
+     */
+    protected function fillQuestions(array $data, Lesson $record): array
+    {
+        $data['questions'] = $record->questions()->with('options')->get()
+            ->map(fn (\App\Models\LessonQuestion $q): array => [
+                'question' => $q->question,
+                'options' => $q->options
+                    ->map(fn (\App\Models\LessonQuestionOption $o): array => [
+                        'text' => $o->text,
+                        'is_correct' => $o->is_correct,
+                    ])
+                    ->all(),
+            ])
+            ->all();
+
+        return $data;
+    }
+
+    /**
+     * Persist the questions repeater for a lesson. Replaces the existing set so
+     * the saved state always matches the form (order follows the array index).
+     */
+    protected function syncQuestions(Lesson $record, array $data): void
+    {
+        $record->questions()->delete();
+
+        foreach (array_values($data['questions'] ?? []) as $qOrder => $question) {
+            $created = $record->questions()->create([
+                'question' => $question['question'] ?? '',
+                'order' => $qOrder,
+            ]);
+
+            foreach (array_values($question['options'] ?? []) as $oOrder => $option) {
+                $created->options()->create([
+                    'text' => $option['text'] ?? '',
+                    'is_correct' => (bool) ($option['is_correct'] ?? false),
+                    'order' => $oOrder,
+                ]);
+            }
+        }
     }
 
     /**

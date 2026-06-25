@@ -25,7 +25,8 @@ return [
         'browse_free' => 'ابدأ بدورة مجانية',
         'featured' => 'أحدث الدورات',
         'featured_books' => 'أحدث الكتب',
-        'view_all' => 'شوف الكل',
+        'view_all' => 'الاطلاع على جميع الدورات',
+        'view_all_books' => 'الاطلاع على جميع الكتب',
 
         'stats' => [
             'courses' => 'دورة متاحة',
