@@ -20,7 +20,7 @@ return [
 
     'signature' => 'Platform Management',
 
-    'download_pdf' => 'Download PDF',
+    'download_pdf' => 'Print / Save as PDF',
     'back' => 'Back to lesson',
     'preparing' => 'Preparing file…',
 

@@ -20,7 +20,7 @@ return [
 
     'signature' => 'إدارة المنصة',
 
-    'download_pdf' => 'تحميل الشهادة PDF',
+    'download_pdf' => 'طباعة / حفظ PDF',
     'back' => 'العودة إلى الدرس',
     'preparing' => 'جارٍ تجهيز الملف…',
 

@@ -8,7 +8,7 @@
     $brand = Setting::get('primary_color', '#4f46e5');
     $gold  = Setting::get('secondary_color', '#f59e0b');
 
-    // hex -> rgba helper for translucent tints (html2canvas-safe, no color-mix()).
+    // hex -> rgba helper for translucent tints (broad print-engine support).
     $rgba = function (string $hex, float $a): string {
         $hex = ltrim($hex, '#');
         if (strlen($hex) === 3) {
@@ -37,9 +37,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -283,11 +280,41 @@
         @media (max-width: 480px) {
             .toolbar .btn { padding: 10px 16px; font-size: 13px; }
         }
+
+        @if ($dir === 'rtl')
+        /* letter-spacing severs Arabic cursive joins — keep it off for RTL text. */
+        .badge, .stat .label, .foot-seal .pct-label { letter-spacing: 0 !important; }
+        @endif
+
+        /* ── Print / Save as PDF: native engine shapes Arabic correctly ──── */
+        @media print {
+            @page { size: 297mm 210mm; margin: 0; }
+            html, body {
+                background: #fff !important;
+                margin: 0;
+                padding: 0;
+                display: block;
+                min-height: 0;
+            }
+            .toolbar { display: none !important; }
+            /* Undo the on-screen fit-to-viewport scaling set via JS. */
+            .stage { transform: none !important; height: auto !important; }
+            .cert {
+                width: 297mm;
+                height: 210mm;
+                box-shadow: none !important;
+            }
+            /* Force gradients/background colours to print. */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="toolbar" id="toolbar">
-        <button class="btn btn-primary" id="downloadBtn" onclick="downloadPdf()">
+        <button class="btn btn-primary" id="downloadBtn" onclick="window.print()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
             <span id="downloadLabel">{{ __('certificate.download_pdf') }}</span>
         </button>
@@ -390,47 +417,10 @@
         window.addEventListener('resize', fitStage);
         fitStage();
 
-        async function downloadPdf() {
-            const btn = document.getElementById('downloadBtn');
-            const label = document.getElementById('downloadLabel');
-            const original = label.textContent;
-            btn.setAttribute('disabled', 'disabled');
-            label.textContent = @json(__('certificate.preparing'));
-
-            try {
-                // Make sure the web fonts are painted before capturing.
-                if (document.fonts && document.fonts.ready) {
-                    await document.fonts.ready;
-                }
-
-                const node = document.getElementById('certificate');
-                const canvas = await html2canvas(node, {
-                    scale: 2,
-                    backgroundColor: '#ffffff',
-                    useCORS: true,
-                    logging: false,
-                    width: CERT_WIDTH,
-                    height: CERT_HEIGHT,
-                    windowWidth: CERT_WIDTH,
-                    windowHeight: CERT_HEIGHT,
-                });
-
-                const imgData = canvas.toDataURL('image/png');
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF({
-                    orientation: 'landscape',
-                    unit: 'px',
-                    format: [CERT_WIDTH, CERT_HEIGHT],
-                });
-                pdf.addImage(imgData, 'PNG', 0, 0, CERT_WIDTH, CERT_HEIGHT);
-                pdf.save(@json($fileSlug) + '-certificate.pdf');
-            } catch (e) {
-                console.error(e);
-                alert('PDF error: ' + e.message);
-            } finally {
-                btn.removeAttribute('disabled');
-                label.textContent = original;
-            }
+        // Make sure the web fonts are loaded before a print is triggered, so the
+        // certificate is captured with Tajawal/Amiri rather than a fallback.
+        if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.catch(() => {});
         }
     </script>
 </body>
