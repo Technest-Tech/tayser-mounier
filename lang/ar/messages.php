@@ -67,5 +67,6 @@ return [
         'continue' => 'متابعة',
         'minutes' => 'دقيقة',
         'currency' => 'ج.م',
+        'currency_usd' => 'دولار',
     ],
 ];

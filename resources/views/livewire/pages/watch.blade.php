@@ -83,6 +83,32 @@
 
                                     <span class="shrink-0 font-mono text-xs tabular-nums" x-text="`${fmt(current)} / ${fmt(duration)}`"></span>
 
+                                    {{-- Playback speed --}}
+                                    <div class="relative shrink-0" @click.outside="showRates = false">
+                                        <button
+                                            type="button"
+                                            @click="showRates = !showRates"
+                                            class="rounded px-2 py-0.5 text-xs font-bold tabular-nums hover:bg-white/20"
+                                            aria-label="Playback speed"
+                                            x-text="rate + '×'"
+                                        ></button>
+                                        <div
+                                            x-show="showRates"
+                                            x-cloak
+                                            class="absolute bottom-full right-0 mb-2 w-20 overflow-hidden rounded-lg bg-slate-900/95 py-1 text-xs shadow-xl ring-1 ring-white/10"
+                                        >
+                                            <template x-for="r in rates" :key="r">
+                                                <button
+                                                    type="button"
+                                                    @click="setRate(r)"
+                                                    class="block w-full px-3 py-1.5 text-right font-semibold tabular-nums hover:bg-white/10"
+                                                    :class="r === rate ? 'text-red-500' : 'text-white'"
+                                                    x-text="r + '×'"
+                                                ></button>
+                                            </template>
+                                        </div>
+                                    </div>
+
                                     <button type="button" @click="toggleFullscreen()" class="shrink-0" aria-label="Fullscreen">
                                         <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9M3.75 20.25h4.5m-4.5 0v-4.5m0 4.5L9 15m11.25 5.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/></svg>
                                     </button>
@@ -146,6 +172,13 @@
                         >
                             {{ __('courses.watch.audio_unsupported') }}
                         </audio>
+                        <a
+                            href="{{ route('lessons.audio.download', [$course, $lesson]) }}"
+                            class="mt-3 inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-600"
+                        >
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                            {{ __('courses.watch.audio_download') }}
+                        </a>
                     </div>
                 @endif
 
@@ -203,6 +236,21 @@
                                         @endif
                                     </p>
                                 </div>
+
+                                {{-- Certificate: shown once the quiz is finished, for signed-in students. --}}
+                                @auth
+                                    @if ($quizSubmitted)
+                                        <a
+                                            href="{{ route('lessons.certificate', [$course, $lesson]) }}"
+                                            target="_blank"
+                                            rel="noopener"
+                                            class="btn ms-auto self-center inline-flex items-center gap-2 bg-accent-500 text-white shadow-lg shadow-accent-600/30 hover:bg-accent-600"
+                                        >
+                                            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9a9.06 9.06 0 0 0-1.5.124m12-.124a9.06 9.06 0 0 1 1.5.124M9 16.5h6m-9 1.875a3.375 3.375 0 0 0 6.75 0V9.75a3.375 3.375 0 0 0-6.75 0v8.625Z"/><circle cx="12" cy="8.25" r="3.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                            {{ __('certificate.download') }}
+                                        </a>
+                                    @endif
+                                @endauth
                             </div>
 
                             @if (! $quizSubmitted)
@@ -428,6 +476,9 @@
                 progress: 0,
                 player: null,
                 timer: null,
+                rate: 1,
+                showRates: false,
+                rates: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2],
 
                 start() {
                     if (this.started) return;
@@ -452,6 +503,9 @@
                                     // if the shield is removed the YouTube links can't be dragged.
                                     e.target.getIframe().style.pointerEvents = 'none';
                                     this.duration = e.target.getDuration();
+                                    if (this.rate !== 1 && e.target.setPlaybackRate) {
+                                        e.target.setPlaybackRate(this.rate);
+                                    }
                                     e.target.playVideo();
                                     this.startTracking();
                                 },
@@ -476,6 +530,14 @@
                 toggle() {
                     if (!this.player) return;
                     this.playing ? this.player.pauseVideo() : this.player.playVideo();
+                },
+
+                setRate(r) {
+                    this.rate = r;
+                    this.showRates = false;
+                    if (this.player && this.player.setPlaybackRate) {
+                        this.player.setPlaybackRate(r);
+                    }
                 },
 
                 seek(event) {

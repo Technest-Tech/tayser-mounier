@@ -2,7 +2,7 @@
     x-data="{ open: false }"
     class="sticky top-0 z-40 border-b border-slate-200/70 bg-white/80 backdrop-blur"
 >
-    <nav class="container-app flex h-16 items-center justify-between gap-4">
+    <nav class="container-app flex h-24 items-center justify-between gap-4">
         {{-- Brand --}}
         @php
             $siteLogo  = \App\Models\Setting::get('site_logo');
@@ -10,11 +10,11 @@
         @endphp
         <a href="{{ route('home') }}" class="flex items-center gap-2.5">
             @if ($siteLogo)
-                <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($siteLogo) }}" alt="{{ $siteTitle }}" class="h-12 w-12 rounded-lg object-contain">
+                <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($siteLogo) }}" alt="{{ $siteTitle }}" class="h-16 w-16 rounded-lg object-contain">
             @else
-                <span class="brand-mark h-12 w-12 text-xl">ت</span>
+                <span class="brand-mark h-16 w-16 text-2xl">ت</span>
             @endif
-            <span class="text-lg font-extrabold tracking-tight text-slate-900">{{ $siteTitle }}</span>
+            <span class="text-xl font-extrabold tracking-tight text-slate-900">{{ $siteTitle }}</span>
         </a>
 
         {{-- Desktop links --}}

@@ -79,9 +79,19 @@ class CourseResource extends Resource
                         ->default(false),
 
                     Forms\Components\TextInput::make('price')
-                        ->label(__('admin.price'))
+                        ->label(__('admin.price_egp'))
+                        ->helperText(__('admin.price_egp_hint'))
                         ->numeric()
                         ->prefix(__('messages.common.currency'))
+                        ->default(0)
+                        ->visible(fn (Forms\Get $get) => ! $get('is_free'))
+                        ->required(fn (Forms\Get $get) => ! $get('is_free')),
+
+                    Forms\Components\TextInput::make('price_usd')
+                        ->label(__('admin.price_usd'))
+                        ->helperText(__('admin.price_usd_hint'))
+                        ->numeric()
+                        ->prefix(__('messages.common.currency_usd'))
                         ->default(0)
                         ->visible(fn (Forms\Get $get) => ! $get('is_free'))
                         ->required(fn (Forms\Get $get) => ! $get('is_free')),
@@ -121,8 +131,13 @@ class CourseResource extends Resource
                     ->boolean(),
 
                 Tables\Columns\TextColumn::make('price')
-                    ->label(__('admin.price'))
+                    ->label(__('admin.price_egp'))
                     ->money('EGP')
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('price_usd')
+                    ->label(__('admin.price_usd'))
+                    ->money('USD')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('lessons_count')

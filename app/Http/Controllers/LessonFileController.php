@@ -23,6 +23,16 @@ class LessonFileController extends Controller
     }
 
     /**
+     * Force-download the lesson's voice file as an attachment.
+     */
+    public function audioDownload(Course $course, Lesson $lesson): StreamedResponse
+    {
+        $path = $this->resolvePath($course, $lesson, $lesson->audio_path);
+
+        return Storage::disk('local')->download($path, $this->fileName($lesson, $path));
+    }
+
+    /**
      * Stream the lesson's PDF inline so it previews in the embedded viewer.
      */
     public function pdf(Course $course, Lesson $lesson): StreamedResponse
@@ -43,9 +53,10 @@ class LessonFileController extends Controller
         abort_unless($course->isPublished(), 404);
         abort_unless($lesson->course_id === $course->id, 404);
 
-        // Free course, free preview lesson, or the user is enrolled.
+        // Free preview lessons are open to everyone (including guests); all
+        // other files require a signed-in user with a free course or enrollment.
         abort_unless(
-            $course->is_free || $lesson->is_preview || auth()->user()?->isEnrolledIn($course),
+            $lesson->is_preview || (auth()->check() && ($course->is_free || auth()->user()->isEnrolledIn($course))),
             403,
         );
 

@@ -21,6 +21,7 @@ class Course extends Model
         'description',
         'thumbnail',
         'price',
+        'price_usd',
         'is_free',
         'status',
     ];
@@ -29,6 +30,7 @@ class Course extends Model
     {
         return [
             'price' => 'decimal:2',
+            'price_usd' => 'decimal:2',
             'is_free' => 'boolean',
             'status' => CourseStatus::class,
         ];
@@ -43,6 +45,7 @@ class Course extends Model
             // Keep price/is_free consistent.
             if ($course->is_free) {
                 $course->price = 0;
+                $course->price_usd = 0;
             }
         });
     }

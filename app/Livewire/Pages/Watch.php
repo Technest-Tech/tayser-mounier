@@ -36,7 +36,7 @@ class Watch extends Component
         abort_unless($course->isPublished(), 404);
 
         $this->course = $course;
-        $this->enrolled = auth()->user()->isEnrolledIn($course);
+        $this->enrolled = auth()->check() && auth()->user()->isEnrolledIn($course);
 
         // Default to the first lesson if none specified.
         $lesson ??= $course->lessons()->orderBy('order')->firstOrFail();
@@ -52,11 +52,17 @@ class Watch extends Component
     }
 
     /**
-     * A lesson is watchable if the course is free, it is a preview, or the user is enrolled.
+     * Free preview lessons are watchable by anyone, including signed-out
+     * visitors. Every other lesson requires a signed-in user who either has a
+     * free course or is enrolled.
      */
     protected function authorizeLesson(Lesson $lesson): void
     {
-        abort_unless($this->course->is_free || $lesson->is_preview || $this->enrolled, 403);
+        if ($lesson->is_preview) {
+            return;
+        }
+
+        abort_unless(auth()->check() && ($this->course->is_free || $this->enrolled), 403);
     }
 
     public function selectLesson(Lesson $lesson): void
@@ -77,6 +83,11 @@ class Watch extends Component
     {
         $this->answers = [];
         $this->quizSubmitted = false;
+
+        // Guests (viewing a free preview) have no saved attempts to restore.
+        if (! auth()->check()) {
+            return;
+        }
 
         $attempt = LessonQuizAttempt::where('user_id', auth()->id())
             ->where('lesson_id', $this->lesson->id)
@@ -125,14 +136,18 @@ class Watch extends Component
             return $carry + ($correct && (int) $this->answers[$question->id] === $correct->id ? 1 : 0);
         }, 0);
 
-        LessonQuizAttempt::create([
-            'user_id' => auth()->id(),
-            'lesson_id' => $this->lesson->id,
-            'score' => $score,
-            'total' => $questions->count(),
-            'answers' => $this->answers,
-            'completed_at' => now(),
-        ]);
+        // Only persist attempts for signed-in users; guests can still take the
+        // quiz on a free preview, their result just isn't recorded.
+        if (auth()->check()) {
+            LessonQuizAttempt::create([
+                'user_id' => auth()->id(),
+                'lesson_id' => $this->lesson->id,
+                'score' => $score,
+                'total' => $questions->count(),
+                'answers' => $this->answers,
+                'completed_at' => now(),
+            ]);
+        }
 
         $this->quizSubmitted = true;
     }
@@ -151,6 +166,11 @@ class Watch extends Component
      */
     protected function touchProgress(): void
     {
+        // No progress to track for guests viewing a free preview.
+        if (! auth()->check()) {
+            return;
+        }
+
         LessonProgress::firstOrCreate([
             'user_id' => auth()->id(),
             'lesson_id' => $this->lesson->id,
@@ -159,6 +179,10 @@ class Watch extends Component
 
     public function markComplete(): void
     {
+        if (! auth()->check()) {
+            return;
+        }
+
         LessonProgress::updateOrCreate(
             ['user_id' => auth()->id(), 'lesson_id' => $this->lesson->id],
             ['completed_at' => now()],

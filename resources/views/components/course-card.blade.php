@@ -48,8 +48,11 @@
                 {{ __('courses.detail.total_lessons', ['count' => $course->lessons_count ?? $course->lessons()->count()]) }}
             </span>
             @unless ($course->is_free)
-                <span class="font-extrabold text-slate-900">
+                <span class="text-end font-extrabold text-slate-900">
                     {{ number_format($course->price, 0) }} {{ __('messages.common.currency') }}
+                    <span class="block text-xs font-bold text-slate-400">
+                        {{ __('messages.common.currency_usd') }} {{ number_format($course->price_usd, 0) }}
+                    </span>
                 </span>
             @endunless
         </div>

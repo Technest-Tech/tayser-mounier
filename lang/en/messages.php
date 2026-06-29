@@ -67,5 +67,6 @@ return [
         'continue' => 'Continue',
         'minutes' => 'min',
         'currency' => 'EGP',
+        'currency_usd' => 'USD',
     ],
 ];

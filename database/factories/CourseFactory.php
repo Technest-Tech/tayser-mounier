@@ -24,6 +24,7 @@ class CourseFactory extends Factory
             'description' => fake()->paragraphs(3, true),
             'thumbnail' => null,
             'price' => $isFree ? 0 : fake()->randomElement([99, 149, 199, 299, 499]),
+            'price_usd' => $isFree ? 0 : fake()->randomElement([5, 9, 15, 19, 29]),
             'is_free' => $isFree,
             'status' => CourseStatus::Published,
         ];
@@ -31,12 +32,12 @@ class CourseFactory extends Factory
 
     public function free(): static
     {
-        return $this->state(fn () => ['is_free' => true, 'price' => 0]);
+        return $this->state(fn () => ['is_free' => true, 'price' => 0, 'price_usd' => 0]);
     }
 
     public function paid(): static
     {
-        return $this->state(fn () => ['is_free' => false, 'price' => 199]);
+        return $this->state(fn () => ['is_free' => false, 'price' => 199, 'price_usd' => 19]);
     }
 
     public function draft(): static

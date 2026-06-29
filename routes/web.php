@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BookFileController;
+use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\LessonFileController;
 use App\Http\Controllers\LocaleController;
 use App\Livewire\Actions\Logout;
@@ -18,6 +19,20 @@ Route::get('/', Home::class)->name('home');
 Route::get('/courses', CourseCatalog::class)->name('courses.index');
 Route::get('/courses/{course:slug}', CourseShow::class)->name('courses.show');
 
+// Lesson player & files. Public so free-preview lessons are watchable without
+// logging in; access to non-preview lessons is enforced inside the Watch
+// component and the LessonFileController.
+Route::get('/courses/{course:slug}/learn/{lesson?}', Watch::class)->name('courses.watch');
+Route::get('/courses/{course:slug}/lessons/{lesson}/audio', [LessonFileController::class, 'audio'])->name('lessons.audio');
+Route::get('/courses/{course:slug}/lessons/{lesson}/audio/download', [LessonFileController::class, 'audioDownload'])->name('lessons.audio.download');
+Route::get('/courses/{course:slug}/lessons/{lesson}/pdf', [LessonFileController::class, 'pdf'])->name('lessons.pdf');
+
+// Quiz completion certificate. Requires a signed-in student with a recorded
+// attempt (enforced in the controller).
+Route::get('/courses/{course:slug}/lessons/{lesson}/certificate', [CertificateController::class, 'show'])
+    ->middleware('auth')
+    ->name('lessons.certificate');
+
 // Books --------------------------------------------------------------------
 Route::get('/books', BookCatalog::class)->name('books.index');
 Route::get('/books/{book:slug}/preview', [BookFileController::class, 'preview'])->name('books.preview');
@@ -30,11 +45,6 @@ Route::post('/locale/{locale}', [LocaleController::class, 'update'])->name('loca
 // Authenticated student area ----------------------------------------------
 Route::middleware(['auth'])->group(function () {
     Route::get('/my-courses', MyCourses::class)->name('my-courses');
-    Route::get('/courses/{course:slug}/learn/{lesson?}', Watch::class)->name('courses.watch');
-
-    // Lesson voice files & PDFs (access-checked, streamed inline).
-    Route::get('/courses/{course:slug}/lessons/{lesson}/audio', [LessonFileController::class, 'audio'])->name('lessons.audio');
-    Route::get('/courses/{course:slug}/lessons/{lesson}/pdf', [LessonFileController::class, 'pdf'])->name('lessons.pdf');
 
     // Post-login landing — students go straight to their courses.
     Route::get('dashboard', fn () => redirect()->route('my-courses'))->name('dashboard');

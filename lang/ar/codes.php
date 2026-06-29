@@ -7,6 +7,8 @@ return [
     'submit' => 'افتح الدورة',
     'whatsapp_contact' => 'مش معاك كود؟ تواصل معانا على واتساب',
     'whatsapp_message' => 'السلام عليكم، عايز كود وصول للدورة: :course',
+    'whatsapp_subscribe' => 'اشترك من هنا',
+    'whatsapp_subscribe_message' => 'السلام عليكم، حابب أشترك في الدورة: :course',
     'success' => 'تمام! الدورة اتفتحت، تقدر تبدأ المذاكرة دلوقتي.',
 
     'errors' => [

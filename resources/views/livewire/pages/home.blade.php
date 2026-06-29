@@ -13,7 +13,7 @@
                     {{ \App\Models\Setting::get('hero_eyebrow', __('messages.home.eyebrow')) }}
                 </span>
 
-                <h1 class="mt-6 text-4xl font-extrabold leading-[1.4] text-white sm:text-5xl">
+                <h1 class="mt-6 py-2 text-4xl font-extrabold leading-[1.6] text-white sm:text-5xl">
                     {{ \App\Models\Setting::get('hero_title', __('messages.home.hero_title')) }}
                 </h1>
                 <p class="mt-5 text-lg leading-relaxed text-brand-100">

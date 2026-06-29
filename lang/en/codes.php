@@ -7,6 +7,8 @@ return [
     'submit' => 'Unlock',
     'whatsapp_contact' => "Don't have a code? Contact us on WhatsApp",
     'whatsapp_message' => 'Hello, I would like to get an access code for the course: :course',
+    'whatsapp_subscribe' => 'Subscribe from here',
+    'whatsapp_subscribe_message' => 'Hello, I would like to subscribe to the course: :course',
     'success' => 'Course unlocked! You can now start learning.',
 
     'errors' => [
